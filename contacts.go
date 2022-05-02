@@ -118,10 +118,28 @@ func deleteContact(w http.ResponseWriter, r *http.Request) {
 	for i, value := range Contacts {
 		if value.Id == idStr {
 			Contacts = append(Contacts[:i], Contacts[i+1:]...)
-			break
+			fmt.Fprintf(w, "Contact deleted successfully")
+			return
 		}
 	}
-	fmt.Fprintf(w, "Contact deleted successfully")
+	fmt.Fprintf(w, "Contact with passed id not found in the book")
+}
+
+func updateContact(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var editedContact Contact
+	json.Unmarshal(reqBody, &editedContact)
+	for i, value := range Contacts {
+		if value.Id == idStr {
+			editedContact.Id = idStr
+			Contacts = append(append(Contacts[:i], editedContact), Contacts[i+1:]...)
+			fmt.Fprintf(w, "Contact edited successfully")
+			return
+		}
+	}
+	fmt.Fprintf(w, "Contact with passed id not found in the book")
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +154,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/createContact", createNewContact).Methods("POST")
 	//myRouter.HandleFunc("/contact/{id}", returnSingleContact)
 	myRouter.HandleFunc("/deleteContact/{id}", deleteContact)
+	myRouter.HandleFunc("/updateContact/{id}", updateContact).Methods("POST")
 	http.Handle("/", myRouter)
 	//http.HandleFunc("/contacts", returnAllContacts)
 	log.Fatal(http.ListenAndServe(":8000", nil))
