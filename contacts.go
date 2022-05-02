@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"strconv"
 
@@ -142,6 +143,18 @@ func updateContact(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Contact with passed id not found in the book")
 }
 
+func search(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pattern := vars["pattern"]
+	result := make([]Contact, 0, len(Contacts))
+	for _, value := range Contacts {
+		if strings.Contains(value.FirstName, pattern) || strings.Contains(value.LastName, pattern) || strings.Contains(value.PhoneNumber, pattern) {
+			result = append(result, value)
+		}
+	}
+	json.NewEncoder(w).Encode(result)
+}
+
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to phone contacts!")
 }
@@ -155,6 +168,7 @@ func handleRequests() {
 	//myRouter.HandleFunc("/contact/{id}", returnSingleContact)
 	myRouter.HandleFunc("/deleteContact/{id}", deleteContact)
 	myRouter.HandleFunc("/updateContact/{id}", updateContact).Methods("POST")
+	myRouter.HandleFunc("/search/{pattern}", search)
 	http.Handle("/", myRouter)
 	//http.HandleFunc("/contacts", returnAllContacts)
 	log.Fatal(http.ListenAndServe(":8000", nil))
