@@ -13,32 +13,69 @@ import (
 )
 
 type Contact struct {
-	Id          string `json:"Id"`
+	Id          string `json:Id,omitempty`
 	FirstName   string `json:"FirstName"`
 	LastName    string `json:"LastName"`
 	PhoneNumber string `json:"PhoneNumber"`
 }
 
 var Contacts []Contact
-var MAXPERPAGE int = 10
+
+const (
+	MAXPERPAGE int = 10
+)
+
+//var nextId int = 0
 
 func createNewContact(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var contact Contact
 	json.Unmarshal(reqBody, &contact)
+	contact.Id = strconv.Itoa(1)
+	if len(Contacts) > 0 {
+		lastId, _ := strconv.Atoi(Contacts[len(Contacts)-1].Id)
+		contact.Id = strconv.Itoa(lastId + 1)
+	}
 	Contacts = append(Contacts, contact)
-	fmt.Fprintf(w, "%+v", string(reqBody))
+	fmt.Fprintf(w, "New contact successfully created.")
+	//fmt.Fprintf(w, "%+v", string(reqBody))
 }
 
-func returnSingleContact(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	key := vars["id"]
+// func returnSingleContact(w http.ResponseWriter, r *http.Request) {
+// 	vars := mux.Vars(r)
+// 	key, err := strconv.Atoi(vars["id"])
+// 	if err != nil{
 
-	for _, contact := range Contacts {
-		if contact.Id == key {
-			json.NewEncoder(w).Encode(contact)
-		}
+// 	}
+// 	for _, contact := range Contacts {
+// 		if contact.Id == key {
+// 			json.NewEncoder(w).Encode(contact)
+// 		}
+// 	}
+// }
+
+func getNextContacts(pageNum int) []Contact {
+	start := (pageNum - 1) * MAXPERPAGE
+	stop := start + MAXPERPAGE
+
+	if start >= len(Contacts) {
+		return nil
 	}
+
+	if stop > len(Contacts) {
+		stop = len(Contacts)
+	}
+
+	return Contacts[start:stop]
+}
+
+func returnFirstContacts(w http.ResponseWriter, r *http.Request) {
+	firstContacts := getNextContacts(1)
+	if firstContacts == nil {
+		fmt.Fprintf(w, "No contacts in the book")
+		return
+	}
+	json.NewEncoder(w).Encode(firstContacts)
 }
 
 func returnContactsPerPage(w http.ResponseWriter, r *http.Request) {
@@ -47,21 +84,48 @@ func returnContactsPerPage(w http.ResponseWriter, r *http.Request) {
 	pageNum, err := strconv.Atoi(pageNumStr)
 	if err != nil {
 		fmt.Println(err)
-		fmt.Println("Page must be a number")
+		fmt.Fprintf(w, "Error: Page must be a number")
 		return
 	}
-	json.NewEncoder(w).Encode(Contacts[MAXPERPAGE*(pageNum-1) : MAXPERPAGE*pageNum])
+	pageContacts := getNextContacts(pageNum)
+	if pageContacts == nil {
+		fmt.Fprintf(w, "Page does not exist")
+		return
+	}
+	json.NewEncoder(w).Encode(pageContacts)
+
+	// var pageContacts []Contacts
+	// for i := 0; i < MAXPERPAGE; i++ {
+	// 	pageContacts = append(pageContacts, Contacts[MAXPERPAGE*(pageNum-1)+i])
+	// 	if outOfBoundError != nil {
+
+	// 		fmt.Fprintf(w, "End of contact list reached")
+	// 		break
+	// 	}
+	//fmt.Fprintf(w, "%+v", )
+	//}
 }
 
-//func add(w http.ResponseWriter, r *http.Request)
-func returnFirstContacts(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(Contacts[:MAXPERPAGE])
+func deleteContact(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	// idNum, err := strconv.Atoi(idStr)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	fmt.Fprintf(w, "Error: Id must be a number")
+	// 	return
+	// }
+	for i, value := range Contacts {
+		if value.Id == idStr {
+			Contacts = append(Contacts[:i], Contacts[i+1:]...)
+			break
+		}
+	}
+	fmt.Fprintf(w, "Contact deleted successfully")
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"message":"hello world!"}`))
+	fmt.Fprintf(w, "Welcome to phone contacts!")
 }
 
 func handleRequests() {
@@ -69,8 +133,9 @@ func handleRequests() {
 	myRouter.HandleFunc("/", homePage)
 	myRouter.HandleFunc("/contacts", returnFirstContacts)
 	myRouter.HandleFunc("/contacts/page/{pageNum}", returnContactsPerPage)
-	myRouter.HandleFunc("/contact", createNewContact).Methods("POST")
-	myRouter.HandleFunc("/contact/{id}", returnSingleContact)
+	myRouter.HandleFunc("/createContact", createNewContact).Methods("POST")
+	//myRouter.HandleFunc("/contact/{id}", returnSingleContact)
+	myRouter.HandleFunc("/deleteContact/{id}", deleteContact)
 	http.Handle("/", myRouter)
 	//http.HandleFunc("/contacts", returnAllContacts)
 	log.Fatal(http.ListenAndServe(":8000", nil))
@@ -78,10 +143,6 @@ func handleRequests() {
 
 func main() {
 	fmt.Println("Welcome to phone contacts")
-	Contacts = []Contact{
-		{Id: "1", FirstName: "John", LastName: "Doe", PhoneNumber: "0544444444"},
-		{Id: "2", FirstName: "Jane", LastName: "Doe", PhoneNumber: "0588442728"},
-	}
-
+	Contacts = []Contact{}
 	handleRequests()
 }
