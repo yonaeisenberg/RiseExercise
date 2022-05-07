@@ -32,7 +32,7 @@ func createNewContact(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var contact Contact
 	json.Unmarshal(reqBody, &contact)
-	contact.Id = strconv.Itoa(1)
+	contact.Id = "1"
 	if len(Contacts) > 0 {
 		lastId, _ := strconv.Atoi(Contacts[len(Contacts)-1].Id)
 		contact.Id = strconv.Itoa(lastId + 1)
