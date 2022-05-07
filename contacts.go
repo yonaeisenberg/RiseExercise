@@ -30,7 +30,7 @@ const (
 
 func checkContainsName(contact Contact) bool {
 	for _, value := range Contacts {
-		if strings.ToLower(value.FirstName) == strings.ToLower(contact.FirstName) && strings.ToLower(value.FirstName) == strings.ToLower(contact.FirstName) {
+		if strings.ToLower(value.FirstName) == strings.ToLower(contact.FirstName) && strings.ToLower(value.LastName) == strings.ToLower(contact.LastName) {
 			return true
 		}
 	}
