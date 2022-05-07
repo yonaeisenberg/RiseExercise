@@ -28,6 +28,6 @@ To search for a pattern, which can be either in the first name, the last name or
 ---- Ideas of features to improve ---
 1. Add more fields to the contacts (email, address...)
 2. Perform field sanity check (for example, check the phone number has only numbers or +)
-3. Forbid duplicates (couple of first name and last name already existing or phone number already existing)
+3. Forbid duplicates (couple of first name and last name already existing) -- done
 4. Save the contacts to a DB (right now, when you stop running the application, the data is lost)
 5. Build a UI
