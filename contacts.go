@@ -145,10 +145,10 @@ func updateContact(w http.ResponseWriter, r *http.Request) {
 
 func search(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	pattern := vars["pattern"]
+	pattern := strings.ToLower(vars["pattern"])
 	result := make([]Contact, 0, len(Contacts))
 	for _, value := range Contacts {
-		if strings.Contains(value.FirstName, pattern) || strings.Contains(value.LastName, pattern) || strings.Contains(value.PhoneNumber, pattern) {
+		if strings.Contains(strings.ToLower(value.FirstName), pattern) || strings.Contains(strings.ToLower(value.LastName), pattern) || strings.Contains(strings.ToLower(value.PhoneNumber), pattern) {
 			result = append(result, value)
 		}
 	}
