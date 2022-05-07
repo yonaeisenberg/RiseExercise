@@ -28,10 +28,23 @@ const (
 
 //var nextId int = 0
 
+func checkContainsName(contact Contact) bool {
+	for _, value := range Contacts {
+		if strings.ToLower(value.FirstName) == strings.ToLower(contact.FirstName) && strings.ToLower(value.FirstName) == strings.ToLower(contact.FirstName) {
+			return true
+		}
+	}
+	return false
+}
+
 func createNewContact(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var contact Contact
 	json.Unmarshal(reqBody, &contact)
+	if checkContainsName(contact) {
+		fmt.Fprintf(w, "Error: a contact with same first and last name already exists. If you wish to update, use updateContact/{id}")
+		return
+	}
 	contact.Id = "1"
 	if len(Contacts) > 0 {
 		lastId, _ := strconv.Atoi(Contacts[len(Contacts)-1].Id)
